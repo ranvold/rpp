@@ -25,12 +25,12 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     // Initialize the sorted array (for demonstration purposes)
-    std::vector<int> arr(1000000); // Array with 1 million elements
+    std::vector<int> arr(10000); // Array with 1 billion elements
     for (int i = 0; i < arr.size(); i++) {
         arr[i] = i;
     }
 
-    int target = 999999; // Target value to search for
+    int target = 9999; // Target value to search for
 
     // Divide the array into chunks
     int chunk_size = arr.size() / size;
@@ -42,11 +42,6 @@ int main(int argc, char** argv) {
 
     // Perform binary search in each process's chunk
     int local_result = binarySearch(arr, start, end, target);
-    
-    auto end_time = std::chrono::high_resolution_clock::now(); // End time
-
-    // Calculate execution time for each process
-    std::chrono::duration<double> execution_time = end_time - start_time;
 
     // Communicate the local result to the root process
     int global_result = -1;
@@ -59,7 +54,13 @@ int main(int argc, char** argv) {
         } else {
             std::cout << "Target value not found\n";
         }
-        std::cout << "Execution time: " << execution_time.count() << " seconds\n";
+    
+        auto end_time = std::chrono::high_resolution_clock::now(); // End time
+
+        // Calculate execution time
+        std::chrono::duration<double> execution_time = end_time - start_time;
+        
+        std::cout << "Parallel execution time: " << execution_time.count() * 1000 << " milliseconds\n";
     }
 
     MPI_Finalize();

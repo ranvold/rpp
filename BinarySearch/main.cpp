@@ -18,19 +18,19 @@ int binarySearch(const std::vector<int>& arr, int left, int right, int target) {
 
 int main() {
     // Initialize the sorted array (for demonstration purposes)
-    std::vector<int> arr(1000000); // Array with 1 million elements
+    std::vector<int> arr(10000); // Array with 1 billion elements
     for (int i = 0; i < arr.size(); i++) {
         arr[i] = i;
     }
 
-    int target = 999999; // Target value to search for
+    int target = 9999; // Target value to search for
 
-    // Measure execution time using std::chrono
+    // Measure execution time
     auto start_time = std::chrono::high_resolution_clock::now(); // Start time
 
     // Perform binary search
     int result = binarySearch(arr, 0, arr.size() - 1, target);
-    
+
     auto end_time = std::chrono::high_resolution_clock::now(); // End time
 
     // Calculate execution time
@@ -42,7 +42,8 @@ int main() {
     } else {
         std::cout << "Target value not found\n";
     }
-    std::cout << "Execution time: " << execution_time.count() << " seconds\n";
+
+    std::cout << "Sequential execution time: " << execution_time.count() * 1000 << " milliseconds\n";
 
     return 0;
 }
