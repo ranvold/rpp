@@ -1,0 +1,9 @@
+1 million elements:
+NonParallel = 0.000001006 seconds
+OpenMP = 0.000236888 seconds
+MPI = 0.000001186 seconds
+
+1 billion elements:
+NonParallel = 0.000001684 seconds
+OpenMP = 0.000178964 seconds
+MPI = 0.00212264 seconds
