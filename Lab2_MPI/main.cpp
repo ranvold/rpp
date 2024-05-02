@@ -1,20 +1,27 @@
 #include <mpi.h>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #include <chrono>
 
-int binarySearch(const std::vector<int>& arr, int left, int right, int target) {
+int binarySearch(const std::vector<int>& arr, int left, int right, int target, bool& terminate) {
     while (left <= right) {
+        // Перевірка умови припинення пошуку
+        if (terminate) {
+            return -1; // Вихід з пошуку, якщо знайдено цільове значення
+        }
+        
         int mid = left + (right - left) / 2;
-        if (arr[mid] == target)
-            return mid; // Return the index of the target value
-        if (arr[mid] < target)
+        
+        if (arr[mid] == target) {
+            return mid; // Знайдено цільове значення, повернути індекс
+        } else if (arr[mid] < target) {
             left = mid + 1;
-        else
+        } else {
             right = mid - 1;
+        }
     }
-    return -1; // Return -1 if the target value is not found
+    
+    return -1; // Цільове значення не знайдено
 }
 
 int main(int argc, char** argv) {
@@ -24,41 +31,52 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Initialize the sorted array (for demonstration purposes)
-    std::vector<int> arr(10000); // Array with 1 billion elements
+    // Ініціалізація впорядкованого масиву
+    std::vector<int> arr(100000000);
     for (int i = 0; i < arr.size(); i++) {
         arr[i] = i;
     }
 
-    int target = 9999; // Target value to search for
+    int target = 1; // Цільове значення для пошуку
 
-    // Divide the array into chunks
+    // Поділ масиву на частини
     int chunk_size = arr.size() / size;
     int start = rank * chunk_size;
     int end = (rank == size - 1) ? arr.size() - 1 : start + chunk_size - 1;
 
-    // Measure execution time using std::chrono
-    auto start_time = std::chrono::high_resolution_clock::now(); // Start time
+    // Змінна умова для припинення
+    bool terminate = false;
 
-    // Perform binary search in each process's chunk
-    int local_result = binarySearch(arr, start, end, target);
+    // Вимірювання часу виконання
+    auto start_time = std::chrono::high_resolution_clock::now();
 
-    // Communicate the local result to the root process
+    // Виконання бінарного пошуку у частці масиву кожного процесу
+    int local_result = binarySearch(arr, start, end, target, terminate);
+
+    // Якщо місцевий результат виявлений
+    if (local_result != -1) {
+        // Встановлюємо умову припинення для всіх процесів
+        terminate = true;
+    }
+
+    // Розповсюдження умови припинення всім процесам
+    MPI_Bcast(&terminate, 1, MPI_CXX_BOOL, rank, MPI_COMM_WORLD);
+
+    // Об'єднання результатів у кореневому процесі
     int global_result = -1;
     MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
 
+    // Виведення результату і часу виконання
     if (rank == 0) {
-        // Output the final result and execution time
+        // Обчислення часу виконання
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> execution_time = end_time - start_time;
+        
         if (global_result != -1) {
             std::cout << "Target value " << target << " found at index " << global_result << "\n";
         } else {
             std::cout << "Target value not found\n";
         }
-    
-        auto end_time = std::chrono::high_resolution_clock::now(); // End time
-
-        // Calculate execution time
-        std::chrono::duration<double> execution_time = end_time - start_time;
         
         std::cout << "Parallel execution time: " << execution_time.count() * 1000 << " milliseconds\n";
     }

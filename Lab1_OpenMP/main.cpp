@@ -4,11 +4,16 @@
 #include <chrono>
 #include <omp.h>
 
-int binarySearch(const std::vector<int>& arr, int left, int right, long int target) {
+int binarySearch(const std::vector<int>& arr, int left, int right, long int target, bool& terminate) {
     while (left <= right) {
+        // Перевірка змінної-умови, щоб припинити пошук
+        if (terminate) {
+            return -1; // Вихід з пошуку, якщо цільове значення знайдено
+        }
+
         int mid = left + (right - left) / 2;
         if (arr[mid] == target) {
-            return mid; // Return the index of the target value
+            return mid; // Знайдено цільове значення, повернути індекс
         }
         if (arr[mid] < target) {
             left = mid + 1;
@@ -16,52 +21,57 @@ int binarySearch(const std::vector<int>& arr, int left, int right, long int targ
             right = mid - 1;
         }
     }
-    return -1; // Return -1 if the target value is not found
+    return -1; // Цільове значення не знайдено
 }
 
 int main() {
-    // Initialize the sorted array (for demonstration purposes)
-    std::vector<int> arr(10000); // Array with 1 billion elements
+    // Ініціалізація впорядкованого масиву
+    std::vector<int> arr(100000000);
     for (int i = 0; i < arr.size(); i++) {
         arr[i] = i;
     }
 
-    long int target = 9999; // Target value to search for
+    long int target = 99999999; // Цільове значення для пошуку
 
-    // Measure execution time using std::chrono
-    auto start_time = std::chrono::high_resolution_clock::now(); // Start time
+    // Вимірювання часу виконання
+    auto start_time = std::chrono::high_resolution_clock::now();
 
     int result = -1;
+    // Глобальна змінна-умова для припинення
+    bool terminate = false;
+
     #pragma omp parallel
     {
         int num_threads = omp_get_num_threads();
         int thread_id = omp_get_thread_num();
 
-        // Divide the array into chunks for each thread
+        // Поділ масиву на частини для кожного потоку
         int chunk_size = arr.size() / num_threads;
         int start = thread_id * chunk_size;
         int end = (thread_id == num_threads - 1) ? arr.size() - 1 : start + chunk_size - 1;
 
-        // Perform binary search in each thread's chunk
-        int local_result = binarySearch(arr, start, end, target);
-        
-        // If the target value is found, store the result and exit
+        // Виконання бінарного пошуку у частці кожного потоку
+        int local_result = binarySearch(arr, start, end, target, terminate);
+
+        // Якщо місцевий результат знайдено, змінюємо змінну-умову
         if (local_result != -1) {
             #pragma omp critical
             {
                 if (result == -1) {
                     result = local_result;
+                    terminate = true; // Встановити змінну-умову для припинення потоку
                 }
             }
         }
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now(); // End time
+    // Кінець вимірювання часу виконання
+    auto end_time = std::chrono::high_resolution_clock::now();
 
-    // Calculate execution time
+    // Обчислення часу виконання
     std::chrono::duration<double> execution_time = end_time - start_time;
 
-    // Output the result and execution time
+    // Виведення результатів та часу виконання
     if (result != -1) {
         std::cout << "Target value " << target << " found at index " << result << "\n";
     } else {
