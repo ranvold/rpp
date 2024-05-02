@@ -40,6 +40,9 @@ int main() {
     // Глобальна змінна-умова для припинення
     bool terminate = false;
 
+    // Встановлення кількості потоків
+    omp_set_num_threads(8);
+
     #pragma omp parallel
     {
         int num_threads = omp_get_num_threads();
