@@ -7,36 +7,31 @@ int binarySearch(const std::vector<int>& arr, int left, int right, int target) {
     while (left <= right) {
         int mid = left + (right - left) / 2;
         if (arr[mid] == target)
-            return mid; // Повернути індекс цільового значення
+            return mid;
         if (arr[mid] < target)
             left = mid + 1;
         else
             right = mid - 1;
     }
-    return -1; // Повернути -1, якщо цільове значення не знайдено
+    return -1;
 }
 
 int main() {
-    // Ініціалізація впорядкованого масиву (для демонстраційних цілей)
-    std::vector<int> arr(100000000);
+    std::vector<int> arr(10000);
     for (int i = 0; i < arr.size(); i++) {
         arr[i] = i;
     }
 
-    int target = 99999999; // Цільове значення для пошуку
+    int target = 9999;
 
-    // Вимірювання часу виконання
-    auto start_time = std::chrono::high_resolution_clock::now(); // Початок часу
+    auto start_time = std::chrono::high_resolution_clock::now();
 
-    // Виконання бінарного пошуку
     int result = binarySearch(arr, 0, arr.size() - 1, target);
 
-    auto end_time = std::chrono::high_resolution_clock::now(); // Кінець часу
+    auto end_time = std::chrono::high_resolution_clock::now();
 
-    // Обчислення часу виконання
     std::chrono::duration<double> execution_time = end_time - start_time;
 
-    // Виведення результату та часу виконання
     if (result != -1) {
         std::cout << "Target value " << target << " found at index " << result << "\n";
     } else {
